@@ -442,12 +442,20 @@
   // DATA — load world + CSV
   // =============================
   async function loadWorld(){
-    // Use Visionscarto atlas with ISO‑3 in properties.a3
-    const topoUrl = 'https://cdn.jsdelivr.net/npm/visionscarto-world-atlas@1.0.0/world/110m.json';
-    const topo = await fetch(topoUrl).then(r=>r.json());
-    const countries = topojson.feature(topo, topo.objects.countries);
-    countries.features.forEach(f=>{ f.properties.iso3 = (f.properties.a3||'').toUpperCase()||null; f.properties.name = f.properties.name || f.properties.name_en || 'Unknown'; });
-    state.world = countries;
+    async function loadWorld(){
+  // Visionscarto atlas: countries already have ISO-3 in .a3
+  const topoUrl = 'https://cdn.jsdelivr.net/npm/visionscarto-world-atlas@1.0.0/world/110m.json';
+  const topo = await fetch(topoUrl).then(r => r.json());
+  const countries = topojson.feature(topo, topo.objects.countries);
+
+  countries.features.forEach(f => {
+    f.properties.iso3 = (f.properties.a3 || '').toUpperCase() || null;
+    f.properties.name = f.properties.name || f.properties.name_en || 'Unknown';
+  });
+
+  state.world = countries;
+}
+
   }
 
   async function loadDataCsv(){
