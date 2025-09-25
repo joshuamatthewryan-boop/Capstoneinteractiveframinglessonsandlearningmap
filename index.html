@@ -163,8 +163,8 @@
     lockedIso3:null,
     hoveredIso3:null,
     detectedHeaders:new Set(),
-    pisaByIso3:null
-    openKey: null,
+    pisaByIso3:null,
+    openKey: null
   };
 
   // =============================
@@ -414,16 +414,7 @@
 
     rows.sort((a,b)=> (canon(a.ApproachName).localeCompare(canon(b.ApproachName),undefined,{sensitivity:'base'})) || (canon(a.Level).localeCompare(canon(b.Level))));
     for(const r of rows){
-      const card=el('div',{class:'card'});
-      const h3=el('h3'); h3.appendChild(el('span',{text:r.ApproachName||'(Unnamed)'}));
-      const chips=el('span',{class:'chips'});
-      if(canon(r.Orientation)) chips.appendChild(pill(canon(r.Orientation)));
-      if(canon(r.Mode)) chips.appendChild(pill(canon(r.Mode)));
-      h3.appendChild(chips); card.appendChild(h3);
-      const sections=[['Definition','Definition'],['Source / Context','SourceTypeContext'],['Author','Author'],['Theoretical stance','TheoreticalStance'],['Student‑friendly strategy','StudentFriendlyStrategy'],['Application to humanities','ApplicationToHumanities'],['Key quotes','KeyQuotes'],['Connections / critiques','ConnectionsCritiques'],['Government mandated','GovernmentMandated'],['Level','Level']];
-      for(const [label,key] of sections){ const val=canon(r[key]); if(!val) continue; const sec=el('div',{class:'section'}); sec.appendChild(el('h4',{text:label})); sec.appendChild(el('p',{text:val})); card.appendChild(sec); }
-      cardsEl.appendChild(card);
-    renderAccordion(rows);
+      renderAccordion(rows);
 
     }
     renderDiagnostics();
