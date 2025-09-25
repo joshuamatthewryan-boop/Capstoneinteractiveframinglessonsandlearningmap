@@ -173,20 +173,18 @@
   // Leave as null to disable PISA join UI.
   const pisaCsvUrl = null; // e.g., 'pisa_by_country.csv'
 
-  // Known non-ISO tokens which should NOT map to polygons
+  // Non-polygon tokens that should not attempt to shade
   const NON_POLYGON_TOKENS = new Set(['GLB','GLOBAL','WORLD','EUROPE','EUR','EU','MENA','AMAZON','ROME','APAC','EMEA','LATAM','ASEAN','CARICOM','SADC','WOIWURRUNG','WADAWARRUNG','GULIDJAN']);
 
   // Mapping of common aliases / non-ISO country tokens to ISO-3 codes for polygon matching
   const NON_ISO_TO_ISO3 = {
-    'UK':'GBR', 'U.K.':'GBR', 'GB':'GBR', 'ENG':'GBR', // treat as GB polygon; cards still show originals
-    'NZ':'NZL', 'SIN':'SGP', 'SAF':'ZAF', 'ZIM':'ZWE', 'KNY':'KEN', 'GER':'DEU',
-    'SCO':'GBR', 'WAL':'GBR',
-    'RU':'RUS', 'UAE':'ARE', 'DRC':'COD', 'REPUBLIC OF KOREA':'KOR', 'KOREA, REPUBLIC OF':'KOR', 'SOUTH KOREA':'KOR',
-    'NORTH KOREA':'PRK', 'BOLIVIA':'BOL', 'IRAN':'IRN', 'SYRIA':'SYR', 'VIETNAM':'VNM', 'VENEZUELA':'VEN',
-    'TANZANIA':'TZA', 'LAOS':'LAO', 'MOLDOVA':'MDA', 'RUSSIA':'RUS', 'CHINA':'CHN', 'COTE D\'IVOIRE':'CIV',
-    'CÔTE D\'IVOIRE':'CIV', 'COTE DIVOIRE':'CIV', 'BOSNIA':'BIH', 'HERZEGOVINA':'BIH', 'CAPE VERDE':'CPV',
-    'CONGO-BRAZZAVILLE':'COG', 'CONGO-KINSHASA':'COD', 'CZECH REPUBLIC':'CZE', 'ESWATINI':'SWZ', 'SWAZILAND':'SWZ',
-    'MACEDONIA':'MKD', 'NORTH MACEDONIA':'MKD'
+    'UK':'GBR','U.K.':'GBR','GB':'GBR','ENG':'GBR','SCO':'GBR','WAL':'GBR',
+    'NZ':'NZL','SIN':'SGP','SAF':'ZAF','ZIM':'ZWE','KNY':'KEN','GER':'DEU',
+    'RU':'RUS','UAE':'ARE','DRC':'COD','REPUBLIC OF KOREA':'KOR','KOREA, REPUBLIC OF':'KOR','SOUTH KOREA':'KOR',
+    'NORTH KOREA':'PRK','BOLIVIA':'BOL','IRAN':'IRN','SYRIA':'SYR','VIETNAM':'VNM','VENEZUELA':'VEN',
+    'TANZANIA':'TZA','LAOS':'LAO','MOLDOVA':'MDA','RUSSIA':'RUS','CHINA':'CHN','COTE D\'IVOIRE':'CIV','CÔTE D\'IVOIRE':'CIV','COTE DIVOIRE':'CIV',
+    'BOSNIA':'BIH','HERZEGOVINA':'BIH','CAPE VERDE':'CPV','CONGO-BRAZZAVILLE':'COG','CONGO-KINSHASA':'COD',
+    'CZECH REPUBLIC':'CZE','ESWATINI':'SWZ','SWAZILAND':'SWZ','MACEDONIA':'MKD','NORTH MACEDONIA':'MKD'
   };
 
   // Canonical headers expected (case-insensitive matching allowed when parsing)
@@ -239,8 +237,8 @@
     if (!token) return null;
     if (NON_POLYGON_TOKENS.has(token)) return null;
 
-    // Handle sub-regions like "AUS - VIC" or "USA - NY": map left side.
-    const left = token.split(/\s*-\s*/)[0].trim();
+    // Handle sub-regions like "AUS - VIC" / "AUS – VIC" / "AUS — VIC": map left side.
+    const left = token.split(/[\s]*[\-–—][\s]*/)[0].trim();
 
     // Known aliases
     if (NON_ISO_TO_ISO3[left]) return NON_ISO_TO_ISO3[left];
@@ -259,10 +257,10 @@
   }
 
   function parseCountryTokens(cell) {
-    // Split on commas into tokens; trim whitespace; keep originals for display
+    // Split on common separators: comma, full‑width comma, semicolon, or pipe; trim whitespace; keep originals for display
     const raw = canon(cell);
     if (!raw) return { originalTokens: [], iso3s: []};
-    const originalTokens = raw.split(',').map(s => s.trim()).filter(Boolean);
+    const originalTokens = raw.split(/[,，;|]/).map(s => s.trim()).filter(Boolean);
     const iso3s = new Set();
     for (const t of originalTokens) {
       const iso = tokenToIso3(t);
@@ -336,8 +334,10 @@
 
   function renderDiagnostics() {
     const n = state.rows.length;
-    const keys = CANONICAL_HEADERS.join(', ');
-    diagEl.textContent = `Loaded ${n} rows. Detected keys: ${keys}.`;
+    const headers = [...state.detectedHeaders];
+    const shaded = state.shadedIso3ByMode[state.mode].size;
+    const worldCount = state.world?.features?.length || 0;
+    diagEl.textContent = `Loaded ${n} rows. Headers seen: ${headers.join(' | ')}. Countries loaded: ${worldCount}. Shaded in ${state.mode}: ${shaded}.`;
   }
 
   function renderGlobalSummary() {
@@ -432,7 +432,8 @@
   // =============================
   const svg = d3.select('#map');
   const g = svg.append('g');
-  const path = d3.geoPath(d3.geoNaturalEarth1());
+  const projection = d3.geoNaturalEarth1();
+  const path = d3.geoPath(projection);
   const graticule = d3.geoGraticule10();
 
   g.append('path').attr('class','graticule').attr('d', path(graticule));
@@ -489,13 +490,14 @@
       fetch(namesUrl).then(r => r.text())
     ]);
     const names = d3.tsvParse(namesTsv).reduce((acc, d) => {
-      // d => { id, name, iso3 }
-      acc[d.id] = d; return acc;
+      // d => { id, name, iso3 } where id is zero-padded like '004'
+      acc[String(d.id).padStart(3,'0')] = d; return acc;
     }, {});
     const countries = topojson.feature(topo, topo.objects.countries);
-    // Attach iso3/name onto properties
+    // Attach iso3/name onto properties — world-atlas feature ids can be numeric, so pad them to 3 chars
     countries.features.forEach(f => {
-      const meta = names[f.id] || {};
+      const id3 = String(f.id).padStart(3,'0');
+      const meta = names[id3] || {};
       f.properties.name = meta.name || f.properties.name || 'Unknown';
       f.properties.iso3 = meta.iso3 || null; // some tiny territories may be null
     });
@@ -512,7 +514,10 @@
 
   async function loadDataCsv() {
     const raw = await d3.csv(dataCsvUrl);
-    const normalized = raw.map(normalizeRow);
+    const normalized = raw
+      .map(normalizeRow)
+      // Drop rows that are entirely empty / junk (no mode, no iso3s, no approach)
+      .filter(r => r && (r.__modes.length > 0 || r.__iso3s.length > 0 || canon(r.ApproachName) || canon(r.CountryCode)));
     state.rows = normalized;
 
     // Index rows by mode and iso3
@@ -536,7 +541,7 @@
       .attr('d', path)
       .on('mouseover', (event, d) => {
         if (state.lockedIso3) return; // ignore while locked
-        state.hoveredIso3 = d.properties.iso3;
+        state.hoveredIso3 = d.properties.iso3 || null;
         maybeRenderPanel();
       })
       .on('mouseout', (event, d) => {
@@ -545,7 +550,8 @@
         maybeRenderPanel();
       })
       .on('click', (event, d) => {
-        const iso = d.properties.iso3;
+        const iso = d.properties.iso3 || null;
+        if (!iso) return;
         state.lockedIso3 = (state.lockedIso3 === iso) ? null : iso;
         updateLockStyles();
         maybeRenderPanel();
