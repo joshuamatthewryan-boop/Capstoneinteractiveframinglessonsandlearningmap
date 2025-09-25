@@ -175,17 +175,59 @@
 
   // Non-polygon tokens that should not attempt to shade
   const NON_POLYGON_TOKENS = new Set(['GLB','GLOBAL','WORLD','EUROPE','EUR','EU','MENA','AMAZON','ROME','APAC','EMEA','LATAM','ASEAN','CARICOM','SADC','WOIWURRUNG','WADAWARRUNG','GULIDJAN']);
+    
+
+  // ---- Display labels for virtual/region tokens ----
+  const TOKEN_LABELS = {
+  GLB: "Globalised framing",
+  MENA: "MENA (region)",
+  EUR: "Europe (region)",
+  WOI: "AUS – VIC – Centre (Woiwurrung)",
+  WAD: "AUS – VIC – West of Centre (Wadawurrung)",
+  GUL: "AUS – VIC – South-West (Gulidjan)",
+  WOIWURRUNG: "AUS – VIC – Centre (Woiwurrung)",
+  WADAWARRUNG: "AUS – VIC – West of Centre (Wadawurrung)",
+  GULIDJAN: "AUS – VIC – South-West (Gulidjan)"
+
+  const VIRTUAL_ONLY_TOKENS = new Set(["GLB"]);
+
+  // ---- Single-country anchors for non-ISO Indigenous tokens (shades AUS) ----
+const ANCHOR_TOKENS_TO_ISO3 = {
+  WOI: "AUS – VIC", WAD: "AUS – VIC", GUL: "AUS – VIC",
+  WOIWURRUNG: "AUS – VIC", WADAWARRUNG: "AUS – VIC", GULIDJAN: "AUS – VIC"
+};
+
+// ---- Multi-country region expansions (edit to your definitions) ----
+const REGION_TO_ISO3S = {
+  // MENA (typical modern definition; tweak as you like)
+  MENA: [
+    "DZA","EGY","LBY","MAR","TUN",     // North Africa
+    "ARE","BHR","IRN","IRQ","ISR","JOR","KWT","LBN","OMN","PSE","QAT","SAU","SYR","TUR","YEM" // Middle East
+    // optionally add: "SDN","DJB","SOM","MRT" if you wish
+  ],
+  // Europe (broad list; edit as needed)
+  EUR: [
+    "ALB","AND","AUT","BEL","BGR","BIH","BLR","CHE","CYP","CZE","DEU","DNK","ESP","EST","FIN",
+    "FRA","GBR","GEO","GRC","HRV","HUN","IRL","ISL","ITA","LIE","LTU","LUX","LVA","MCO","MDA",
+    "MKD","MLT","MNE","NLD","NOR","POL","PRT","ROU","RUS","SMR","SRB","SVK","SVN","SWE","TUR",
+    "UKR","VAT"
+  ]
+};
+
+// Region tokens that SHOULD shade all members listed above
+const EXPAND_REGIONS_FOR_SHADING = new Set(["MENA","EUR"]);
 
   // Mapping of common aliases / non-ISO country tokens to ISO-3 codes for polygon matching
   const NON_ISO_TO_ISO3 = {
-    'UK':'GBR','U.K.':'GBR','GB':'GBR','ENG':'GBR','SCO':'GBR','WAL':'GBR',
-    'NZ':'NZL','SIN':'SGP','SAF':'ZAF','ZIM':'ZWE','KNY':'KEN','GER':'DEU',
-    'RU':'RUS','UAE':'ARE','DRC':'COD','REPUBLIC OF KOREA':'KOR','KOREA, REPUBLIC OF':'KOR','SOUTH KOREA':'KOR',
-    'NORTH KOREA':'PRK','BOLIVIA':'BOL','IRAN':'IRN','SYRIA':'SYR','VIETNAM':'VNM','VENEZUELA':'VEN',
-    'TANZANIA':'TZA','LAOS':'LAO','MOLDOVA':'MDA','RUSSIA':'RUS','CHINA':'CHN','COTE D\'IVOIRE':'CIV','CÔTE D\'IVOIRE':'CIV','COTE DIVOIRE':'CIV',
-    'BOSNIA':'BIH','HERZEGOVINA':'BIH','CAPE VERDE':'CPV','CONGO-BRAZZAVILLE':'COG','CONGO-KINSHASA':'COD',
-    'CZECH REPUBLIC':'CZE','ESWATINI':'SWZ','SWAZILAND':'SWZ','MACEDONIA':'MKD','NORTH MACEDONIA':'MKD'
-  };
+  'UK':'GBR',
+  'NZ':'NZL',
+  'SIN':'SGP',
+  'SAF':'ZAF',
+  'ZIM':'ZWE',
+  'KNY':'KEN',
+  'GER':'DEU',
+  'NEP':'NPL'
+};
 
   // Canonical headers expected (case-insensitive matching allowed when parsing)
   const CANONICAL_HEADERS = [
@@ -200,13 +242,41 @@
     rows: [],                    // processed data rows
     rowsByMode: {Current: [], Historic: [], Hybrid: []},
     rowsByModeIso3: {Current: new Map(), Historic: new Map(), Hybrid: new Map()},
+    rowsByToken: { Current: new Map(), Historic: new Map(), Hybrid: new Map() },
     shadedIso3ByMode: {Current: new Set(), Historic: new Set(), Hybrid: new Set()},
     mode: 'Current',
     lockedIso3: null,
     hoveredIso3: null,
     detectedHeaders: new Set(),
-    pisaByIso3: null            // optional join
+    pisaByIso3: null            
+    for (const m of r.__modes) {
+  state.rowsByMode[m].push(r);
+
+  // existing: index by country ISO3 + shade
+  for (const iso of r.__iso3s) {
+    if (!state.rowsByModeIso3[m].has(iso)) state.rowsByModeIso3[m].set(iso, []);
+    state.rowsByModeIso3[m].get(iso).push(r);
+    state.shadedIso3ByMode[m].add(iso);
+  }
+
+  // NEW: index region/virtual tokens so they appear as chips + have detail pages
+  const tokenMap = state.rowsByToken[m];
+  for (const tok of r.__displayTokens){
+    const T = stripParens(tok).toUpperCase();
+    const isRegion = !!REGION_TO_ISO3S[T];
+    const isAnchor = !!ANCHOR_TOKENS_TO_ISO3[T];
+    const isVirtualOnly = VIRTUAL_ONLY_TOKENS.has(T);
+    if (isRegion || isAnchor || isVirtualOnly){
+      if (!tokenMap.has(T)) tokenMap.set(T, []);
+      tokenMap.get(T).push(r);
+    }
+  }
+}
+
   };
+
+    
+
 
   // =============================
   // HELPERS — Parsing & Normalization
@@ -239,6 +309,8 @@
 
     // Handle sub-regions like "AUS - VIC" / "AUS – VIC" / "AUS — VIC": map left side.
     const left = token.split(/[\s]*[\-–—][\s]*/)[0].trim();
+    
+
 
     // Known aliases
     if (NON_ISO_TO_ISO3[left]) return NON_ISO_TO_ISO3[left];
@@ -256,15 +328,46 @@
     return null;
   }
 
-  function parseCountryTokens(cell) {
-    // Split on common separators: comma, full‑width comma, semicolon, or pipe; trim whitespace; keep originals for display
-    const raw = canon(cell);
-    if (!raw) return { originalTokens: [], iso3s: []};
-    const originalTokens = raw.split(/[,，;|]/).map(s => s.trim()).filter(Boolean);
-    const iso3s = new Set();
-    for (const t of originalTokens) {
-      const iso = tokenToIso3(t);
-      if (iso) iso3s.add(iso);
+  function parseCountryTokens(cell){
+  const raw = canon(cell);
+  if(!raw) return { originalTokens:[], iso3s:[], displayTokens:[] };
+
+  const tokens = raw.split(/[,，;|]/).map(s=>s.trim()).filter(Boolean);
+  const iso3s = new Set();
+  const displayTokens = [];
+
+  for (const tRaw of tokens){
+    const T = stripParens(tRaw).toUpperCase();
+
+    // Region expansions (e.g., MENA/EUR)
+    if (REGION_TO_ISO3S[T] && EXPAND_REGIONS_FOR_SHADING.has(T)){
+      REGION_TO_ISO3S[T].forEach(iso => iso3s.add(iso));
+      displayTokens.push(TOKEN_LABELS[T] || tRaw);
+      continue;
+    }
+
+    // Indigenous anchors to AUS
+    if (ANCHOR_TOKENS_TO_ISO3[T]){
+      iso3s.add(ANCHOR_TOKENS_TO_ISO3[T]);
+      displayTokens.push(TOKEN_LABELS[T] || tRaw);
+      continue;
+    }
+
+    // Purely virtual tokens (e.g., GLB)
+    if (VIRTUAL_ONLY_TOKENS.has(T)){
+      displayTokens.push(TOKEN_LABELS[T] || tRaw);
+      continue;
+    }
+
+    // Normal polygon paths (ISO-3 or alias -> ISO-3)
+    const iso = tokenToIso3(T);
+    if (iso) iso3s.add(iso);
+    displayTokens.push(TOKEN_LABELS[T] || tRaw);
+  }
+
+  return { originalTokens: tokens, iso3s: [...iso3s], displayTokens };
+  }
+
     }
     return { originalTokens, iso3s: [...iso3s] };
   }
@@ -275,6 +378,7 @@
     for (const [k, v] of Object.entries(rawRow)) {
       const keyCanon = canonHeader(k);
       state.detectedHeaders.add(k);
+      
       // build a lookup between canonicalized header and our expected canonical header
       for (const expected of CANONICAL_HEADERS) {
         const expectedCanon = canonHeader(expected);
@@ -286,10 +390,12 @@
 
     const country = parseCountryTokens(map['CountryCode']);
     const modes = normalizeModeCell(map['Mode']);
+    
 
     return {
       ...map,
       __originalTokens: country.originalTokens,
+      __displayTokens: country.displayTokens, 
       __iso3s: country.iso3s,
       __modes: modes
     };
@@ -340,6 +446,32 @@
     diagEl.textContent = `Loaded ${n} rows. Headers seen: ${headers.join(' | ')}. Countries loaded: ${worldCount}. Shaded in ${state.mode}: ${shaded}.`;
   }
 
+  function renderTokenDetail(T){
+  const rows = (state.rowsByToken[state.mode].get(T)||[]);
+  const label = TOKEN_LABELS[T] || T;
+  panelTitleEl.textContent = label;
+  panelSubEl.textContent = `Approaches in ${state.mode} (${REGION_TO_ISO3S[T] ? 'region' : 'virtual place'})`;
+  lockedRowEl.hidden = true; unlockBtnEl.disabled = true;
+
+  cardsEl.innerHTML='';
+  if (!rows.length){ cardsEl.appendChild(el('div',{class:'empty',text:'No rows for this token in this mode.'})); return; }
+
+  rows.sort((a,b)=> (canon(a.ApproachName).localeCompare(canon(b.ApproachName),undefined,{sensitivity:'base'})) || (canon(a.Level).localeCompare(canon(b.Level))));
+  for (const r of rows){
+    const card=el('div',{class:'card'});
+    const h3=el('h3'); h3.appendChild(el('span',{text:r.ApproachName||'(Unnamed)'}));
+    const chips=el('span',{class:'chips'});
+    if(canon(r.Orientation)) chips.appendChild(pill(canon(r.Orientation)));
+    if(canon(r.Mode)) chips.appendChild(pill(canon(r.Mode)));
+    h3.appendChild(chips); card.appendChild(h3);
+
+    const sections=[['Definition','Definition'],['Source / Context','SourceTypeContext'],['Author','Author'],['Theoretical stance','TheoreticalStance'],['Student-friendly strategy','StudentFriendlyStrategy'],['Application to humanities','ApplicationToHumanities'],['Key quotes','KeyQuotes'],['Connections / critiques','ConnectionsCritiques'],['Government mandated','GovernmentMandated'],['Level','Level']];
+    for (const [label,key] of sections){ const val=canon(r[key]); if(!val) continue; const sec=el('div',{class:'section'}); sec.appendChild(el('h4',{text:label})); sec.appendChild(el('p',{text:val})); card.appendChild(sec); }
+    cardsEl.appendChild(card);
+  }
+}
+
+
   function renderGlobalSummary() {
     panelTitleEl.textContent = 'Global summary';
     panelModeLabelEl.textContent = state.mode;
@@ -360,7 +492,17 @@
         wrap.appendChild(card);
       }
       cardsEl.appendChild(wrap);
-    }
+      const tokenMap = state.rowsByToken[state.mode];
+  if (tokenMap.size){
+  const h = el('div',{class:'sub',text:'Regions & Peoples:'});
+  const box = el('div'); box.style.display='flex'; box.style.flexWrap='wrap'; box.style.gap='8px';
+  for (const T of [...tokenMap.keys()].sort()){
+    const b = el('button',{class:'pill'}); b.textContent = TOKEN_LABELS[T] || T;
+    b.onclick = ()=> renderTokenDetail(T);
+    box.appendChild(b);
+   }
+  cardsEl.appendChild(h); cardsEl.appendChild(box);
+   }
     renderDiagnostics();
   }
 
@@ -535,7 +677,7 @@
 
   function drawMap() {
     countriesG.selectAll('path.country')
-      .data(state.world.features.filter(f => !!f.properties.iso3))
+      async function loadWorld() {   // TopoJSON with ISO-3 baked in as properties.a3   const topoUrl = 'https://cdn.jsdelivr.net/npm/visionscarto-world-atlas@1.0.0/world/110m.json';   const topo = await fetch(topoUrl).then(r => r.json());   const countries = topojson.feature(topo, topo.objects.countries);    countries.features.forEach(f => {     f.properties.iso3 = (f.properties.a3 || '').toUpperCase() || null;     f.properties.name = f.properties.name || f.properties.name_en || 'Unknown';   });    state.world = countries; }
       .join('path')
       .attr('class', 'country')
       .attr('d', path)
