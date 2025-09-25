@@ -52,6 +52,16 @@
     .swatch{width:14px;height:10px;border:1px solid rgba(255,255,255,.2)}
     .swatch-yes{background:#1e2e4a}
     .swatch-no{background:#1a212f}
+    /* Accordion UI */
+    .accordion{display:grid;gap:.5rem}
+    .acc-item{border:1px solid rgba(255,255,255,.08);border-radius:12px;background:rgba(255,255,255,.03);overflow:hidden}
+    .acc-header{display:flex;align-items:center;justify-content:space-between;gap:.75rem;padding:.65rem .8rem;cursor:pointer}
+    .acc-title{font-weight:650}
+    .acc-chips{display:flex;gap:.35rem;flex-wrap:wrap}
+    .acc-arrow{transition:transform .18s ease}
+    .acc-item[aria-expanded="true"] .acc-arrow{transform:rotate(90deg)}
+    .acc-body{display:none;padding:.5rem .9rem .8rem;border-top:1px solid rgba(255,255,255,.08)}
+    .acc-item[aria-expanded="true"] .acc-body{display:block}
   </style>
 </head>
 <body>
@@ -153,6 +163,8 @@
     hoveredIso3:null,
     detectedHeaders:new Set(),
     pisaByIso3:null
+    openKey: null,
+
   };
 
   // =============================
@@ -272,6 +284,65 @@
     diagEl.textContent = `Loaded ${n} rows. Headers seen: ${headers.join(' | ')}. Countries loaded: ${worldCount}. Shaded in ${state.mode}: ${shaded}.`;
   }
 
+    function renderAccordion(rows){
+  const list = el('div',{class:'accordion'});
+
+  rows.forEach((r,idx)=>{
+    const key = `${canon(r.ApproachName)||'(Unnamed)'}__${idx}`;
+
+    const item = el('div',{class:'acc-item'});
+    item.setAttribute('aria-expanded', String(state.openKey===key));
+
+    // Header (click to toggle)
+    const header = el('div',{class:'acc-header'});
+    const left = el('div');
+    left.appendChild(el('div',{class:'acc-title', text: r.ApproachName || '(Unnamed)'}));
+    const chips = el('div',{class:'acc-chips'});
+    if (canon(r.Orientation)) chips.appendChild(pill(canon(r.Orientation)));
+    if (canon(r.Mode))        chips.appendChild(pill(canon(r.Mode)));
+    left.appendChild(chips);
+    const arrow = el('span',{class:'acc-arrow',text:'▶'});
+    header.appendChild(left); header.appendChild(arrow);
+
+    header.addEventListener('click',()=>{
+      if (state.openKey===key){ state.openKey=null; item.setAttribute('aria-expanded','false'); return; }
+      state.openKey = key;
+      list.querySelectorAll('.acc-item').forEach(n=>n.setAttribute('aria-expanded','false'));
+      item.setAttribute('aria-expanded','true');
+      item.scrollIntoView({behavior:'smooth',block:'nearest'});
+    });
+
+    // Body (your existing sections)
+    const body = el('div',{class:'acc-body'});
+    const sections = [
+      ['Definition','Definition'],
+      ['Source / Context','SourceTypeContext'],
+      ['Author','Author'],
+      ['Theoretical stance','TheoreticalStance'],
+      ['Student-friendly strategy','StudentFriendlyStrategy'],
+      ['Application to humanities','ApplicationToHumanities'],
+      ['Key quotes','KeyQuotes'],
+      ['Connections / critiques','ConnectionsCritiques'],
+      ['Government mandated','GovernmentMandated'],
+      ['Level','Level']
+    ];
+    for (const [label,keyName] of sections){
+      const val = canon(r[keyName]);
+      if (!val) continue;
+      const sec = el('div',{class:'section'});
+      sec.appendChild(el('h4',{text:label}));
+      sec.appendChild(el('p',{text:val}));
+      body.appendChild(sec);
+    }
+
+    item.appendChild(header);
+    item.appendChild(body);
+    list.appendChild(item);
+  });
+
+  cardsEl.appendChild(list);
+}
+
   function renderTokenDetail(T){
     const rows = state.rowsByToken[state.mode].get(T)||[];
     const label = TOKEN_LABELS[T] || T;
@@ -342,15 +413,8 @@
 
     rows.sort((a,b)=> (canon(a.ApproachName).localeCompare(canon(b.ApproachName),undefined,{sensitivity:'base'})) || (canon(a.Level).localeCompare(canon(b.Level))));
     for(const r of rows){
-      const card=el('div',{class:'card'});
-      const h3=el('h3'); h3.appendChild(el('span',{text:r.ApproachName||'(Unnamed)'}));
-      const chips=el('span',{class:'chips'});
-      if(canon(r.Orientation)) chips.appendChild(pill(canon(r.Orientation)));
-      if(canon(r.Mode)) chips.appendChild(pill(canon(r.Mode)));
-      h3.appendChild(chips); card.appendChild(h3);
-      const sections=[['Definition','Definition'],['Source / Context','SourceTypeContext'],['Author','Author'],['Theoretical stance','TheoreticalStance'],['Student‑friendly strategy','StudentFriendlyStrategy'],['Application to humanities','ApplicationToHumanities'],['Key quotes','KeyQuotes'],['Connections / critiques','ConnectionsCritiques'],['Government mandated','GovernmentMandated'],['Level','Level']];
-      for(const [label,key] of sections){ const val=canon(r[key]); if(!val) continue; const sec=el('div',{class:'section'}); sec.appendChild(el('h4',{text:label})); sec.appendChild(el('p',{text:val})); card.appendChild(sec); }
-      cardsEl.appendChild(card);
+      state.openKey = rows.length ? `${canon(rows[0].ApproachName)||'(Unnamed)'}__0` : null;
+      renderAccordion(rows);
     }
     renderDiagnostics();
   }
