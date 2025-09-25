@@ -1,0 +1,591 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Framing Lessons — Global Humanity Resource</title>
+  <meta name="description" content="Embeddable, interactive world map and detail panel for a meta-analysis of lesson framing practices." />
+  <style>
+    :root{
+      --bg: #0b0c10;
+      --panel-bg: #0f1115;
+      --ink: #e6e7eb;
+      --muted: #9aa3b2;
+      --accent: #4f8cff;
+      --accent-2: #8e5cff;
+      --chip-bg: rgba(255,255,255,0.08);
+      --chip-br: rgba(255,255,255,0.12);
+      --ok: #4fb477;
+      --warn: #e7b84b;
+      --danger: #ff6b6b;
+    }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: radial-gradient(1200px 800px at 20% -10%, #162033 0%, #0b0c10 60%);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, 'Noto Sans', 'Arial Unicode MS', Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    header {
+      padding: 1rem clamp(1rem, 3vw, 2rem);
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 1rem;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      backdrop-filter: blur(6px);
+      position: sticky; top: 0; z-index: 10;
+      background: linear-gradient(180deg, rgba(15,17,21,0.85), rgba(15,17,21,0.65));
+    }
+    .title {
+      font-weight: 700;
+      letter-spacing: 0.2px;
+      font-size: clamp(1.1rem, 1.8vw, 1.35rem);
+      display: flex; align-items: center; gap: .75rem;
+    }
+    .title .dot { width: 10px; height: 10px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent-2)); box-shadow: 0 0 12px rgba(79,140,255,.6);} 
+    .controls { display: flex; gap: .6rem; align-items: center; flex-wrap: wrap; }
+    select, button, .pill {
+      background: var(--chip-bg);
+      color: var(--ink);
+      border: 1px solid var(--chip-br);
+      padding: .5rem .65rem;
+      border-radius: 10px;
+      font-size: .95rem;
+    }
+    select:focus, button:focus { outline: 2px solid var(--accent); outline-offset: 2px; }
+    button { cursor: pointer; }
+    .hint { color: var(--muted); font-size: .92rem; }
+    .email { color: var(--ink); text-decoration: none; border-bottom: 1px dashed var(--chip-br); }
+
+    .wrap {
+      display: grid;
+      grid-template-columns: minmax(320px, 1fr) minmax(360px, 480px);
+      gap: clamp(12px, 2vw, 16px);
+      padding: clamp(12px, 2vw, 16px);
+    }
+    @media (max-width: 980px) { .wrap { grid-template-columns: 1fr; } }
+
+    .map-card {
+      background: var(--panel-bg);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+      overflow: hidden;
+      position: relative;
+    }
+    .map-toolbar {
+      position: absolute; top: 10px; right: 12px; display: flex; gap: 8px; z-index: 2;
+    }
+    .panel {
+      background: var(--panel-bg);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+      padding: 1rem 1rem 1.25rem;
+      min-height: 320px;
+      display: flex; flex-direction: column;
+    }
+    .panel h2 { font-size: 1.05rem; margin: 0 0 .25rem; font-weight: 700; }
+    .panel .sub { color: var(--muted); font-size: .9rem; margin-bottom: .75rem; }
+    .panel .locked { font-size: .9rem; margin-bottom: .5rem; display: flex; align-items: center; gap: .5rem; }
+    .locked .led { width: 8px; height: 8px; border-radius: 50%; background: var(--warn); box-shadow: 0 0 10px rgba(231,184,75,.6);} 
+
+    .cards { display: grid; gap: .75rem; grid-auto-rows: min-content; }
+    .card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: .8rem .9rem; }
+    .card h3 { margin: 0 0 .5rem; font-size: 1rem; display:flex; flex-wrap: wrap; gap: .4rem .5rem; align-items: center; }
+    .chips { display:flex; gap: .35rem; flex-wrap: wrap; }
+    .chip { background: var(--chip-bg); border: 1px solid var(--chip-br); border-radius: 999px; padding: .15rem .5rem; font-size:.75rem; color: var(--muted); }
+    .section { margin-top: .35rem; }
+    .section h4 { margin: .55rem 0 .25rem; font-size: .85rem; color: var(--muted); font-weight: 600; letter-spacing: .2px; }
+    .section p { margin: 0; white-space: pre-wrap; line-height: 1.32; }
+    .empty { color: var(--muted); font-style: italic; }
+
+    .summary-list { display: grid; gap: .5rem; }
+    .summary-item { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: .6rem .7rem; }
+    .summary-item .name { font-weight: 650; }
+    .summary-item .locs { color: var(--muted); font-size:.9rem; margin-top: .2rem; }
+
+    .diag { color: var(--muted); font-size: .8rem; margin-top: .75rem; border-top: 1px dashed rgba(255,255,255,.1); padding-top: .5rem; }
+
+    svg { display: block; width: 100%; height: clamp(360px, 62vh, 780px); background: radial-gradient(1000px 600px at 50% -20%, rgba(79,140,255,.08), transparent 60%); }
+    .country { fill: #1a212f; stroke: rgba(255,255,255,0.08); stroke-width: .6; cursor: pointer; transition: fill 120ms ease-out, opacity 120ms ease-out; }
+    .country.hasData { fill: #1e2e4a; }
+    .country:hover { opacity: 0.9; }
+    .country.locked { stroke: var(--accent); stroke-width: 1.4; }
+    .graticule { fill: none; stroke: rgba(255,255,255,0.07); stroke-width: .4; }
+
+    .legend { position: absolute; left: 12px; bottom: 12px; display:flex; gap:.5rem; align-items:center; background: rgba(0,0,0,.25); padding:.35rem .5rem; border-radius: 8px; border:1px solid rgba(255,255,255,.08); font-size:.85rem; color: var(--muted); }
+    .swatch { width: 14px; height: 10px; border: 1px solid rgba(255,255,255,.2); }
+    .swatch-yes { background: #1e2e4a; }
+    .swatch-no { background: #1a212f; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="title"><span class="dot"></span> Framing Lessons — Global Humanity Resource</div>
+    <div class="controls">
+      <label class="pill" for="mode">Mode</label>
+      <select id="mode" aria-label="Select mode">
+        <option value="Current" selected>Current</option>
+        <option value="Historic">Historic</option>
+        <option value="Hybrid">Hybrid</option>
+      </select>
+      <div class="hint">Hover a country to preview; click to lock. capstone: <a class="email" href="mailto:josryan@student.unimelb.edu.au">josryan@student.unimelb.edu.au</a></div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="map-card">
+      <div class="map-toolbar">
+        <button id="resetZoom" title="Reset pan & zoom">Reset</button>
+        <button id="unlockBtn" title="Unlock selection" disabled>Unlock</button>
+      </div>
+      <svg id="map"></svg>
+      <div class="legend">
+        <div class="swatch swatch-yes" aria-hidden="true"></div> has data ·
+        <div class="swatch swatch-no" aria-hidden="true"></div> no data
+      </div>
+    </section>
+
+    <aside class="panel" aria-live="polite">
+      <h2 id="panelTitle">Global summary</h2>
+      <div class="sub" id="panelSub">Showing all approaches in <span id="panelModeLabel">Current</span> mode.</div>
+      <div class="locked" id="lockedRow" hidden><span class="led"></span><span id="lockedText">Locked</span></div>
+      <div class="cards" id="cards"></div>
+      <div class="diag" id="diag"></div>
+    </aside>
+  </main>
+
+  <!-- Libraries -->
+  <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js"></script>
+
+  <script>
+  // =============================
+  // CONFIG
+  // =============================
+  // Adjust this to point to an absolute URL if hosting the CSV elsewhere.
+  const dataCsvUrl = 'Countries_structure_framing_cleaned.csv';
+  // Optional: a second CSV for PISA keyed by ISO-3 (e.g., { iso3, pisa_reading, pisa_math, pisa_science, year })
+  // Leave as null to disable PISA join UI.
+  const pisaCsvUrl = null; // e.g., 'pisa_by_country.csv'
+
+  // Non-polygon tokens that should not attempt to shade
+  const NON_POLYGON_TOKENS = new Set(['GLB','GLOBAL','WORLD','EUROPE','EUR','EU','MENA','AMAZON','ROME','APAC','EMEA','LATAM','ASEAN','CARICOM','SADC','WOIWURRUNG','WADAWARRUNG','GULIDJAN']);
+
+  // Mapping of common aliases / non-ISO country tokens to ISO-3 codes for polygon matching
+  const NON_ISO_TO_ISO3 = {
+    'UK':'GBR','U.K.':'GBR','GB':'GBR','ENG':'GBR','SCO':'GBR','WAL':'GBR',
+    'NZ':'NZL','SIN':'SGP','SAF':'ZAF','ZIM':'ZWE','KNY':'KEN','GER':'DEU',
+    'RU':'RUS','UAE':'ARE','DRC':'COD','REPUBLIC OF KOREA':'KOR','KOREA, REPUBLIC OF':'KOR','SOUTH KOREA':'KOR',
+    'NORTH KOREA':'PRK','BOLIVIA':'BOL','IRAN':'IRN','SYRIA':'SYR','VIETNAM':'VNM','VENEZUELA':'VEN',
+    'TANZANIA':'TZA','LAOS':'LAO','MOLDOVA':'MDA','RUSSIA':'RUS','CHINA':'CHN','COTE D\'IVOIRE':'CIV','CÔTE D\'IVOIRE':'CIV','COTE DIVOIRE':'CIV',
+    'BOSNIA':'BIH','HERZEGOVINA':'BIH','CAPE VERDE':'CPV','CONGO-BRAZZAVILLE':'COG','CONGO-KINSHASA':'COD',
+    'CZECH REPUBLIC':'CZE','ESWATINI':'SWZ','SWAZILAND':'SWZ','MACEDONIA':'MKD','NORTH MACEDONIA':'MKD'
+  };
+
+  // Canonical headers expected (case-insensitive matching allowed when parsing)
+  const CANONICAL_HEADERS = [
+    'CountryCode','Mode','ApproachName','Definition','SourceTypeContext','Author','TheoreticalStance','StudentFriendlyStrategy','ApplicationToHumanities','KeyQuotes','ConnectionsCritiques','GovernmentMandated','Orientation','Level'
+  ];
+
+  // =============================
+  // STATE
+  // =============================
+  const state = {
+    world: null,                 // GeoJSON FeatureCollection of countries (with .properties.iso3)
+    rows: [],                    // processed data rows
+    rowsByMode: {Current: [], Historic: [], Hybrid: []},
+    rowsByModeIso3: {Current: new Map(), Historic: new Map(), Hybrid: new Map()},
+    shadedIso3ByMode: {Current: new Set(), Historic: new Set(), Hybrid: new Set()},
+    mode: 'Current',
+    lockedIso3: null,
+    hoveredIso3: null,
+    detectedHeaders: new Set(),
+    pisaByIso3: null            // optional join
+  };
+
+  // =============================
+  // HELPERS — Parsing & Normalization
+  // =============================
+  const canon = s => (s || '').toString().trim();
+  const canonHeader = s => canon(s).toLowerCase().replace(/[^a-z]/g,'');
+
+  function normalizeModeCell(val) {
+    // Accept multiple values split by comma, slash or semicolon; case-insensitive.
+    const raw = canon(val);
+    if (!raw) return [];
+    const parts = raw.split(/[,/;]|\band\b/i).map(s => s.trim()).filter(Boolean);
+    const out = new Set();
+    for (const p of parts) {
+      const l = p.toLowerCase();
+      if (l === 'current' || l === 'contemporary' || l === 'present') out.add('Current');
+      else if (l === 'historic' || l === 'historical' || l === 'past') out.add('Historic');
+      else if (l === 'hybrid' || l === 'mixed' || l === 'both') out.add('Hybrid');
+    }
+    return [...out];
+  }
+
+  function stripParens(s) { return canon(s).replace(/\([^)]*\)/g, '').trim(); }
+
+  function tokenToIso3(tokenRaw) {
+    // Preserve original token for display; map only for polygon shading.
+    const token = stripParens(tokenRaw).toUpperCase();
+    if (!token) return null;
+    if (NON_POLYGON_TOKENS.has(token)) return null;
+
+    // Handle sub-regions like "AUS - VIC" / "AUS – VIC" / "AUS — VIC": map left side.
+    const left = token.split(/[\s]*[\-–—][\s]*/)[0].trim();
+
+    // Known aliases
+    if (NON_ISO_TO_ISO3[left]) return NON_ISO_TO_ISO3[left];
+
+    // If already ISO-3
+    if (/^[A-Z]{3}$/.test(left)) return left;
+
+    // Some two-letter variants (rare) — expand minimal cases
+    if (/^[A-Z]{2}$/.test(left)) {
+      const two = left;
+      const TWO_TO_ISO3 = { US:'USA', AU:'AUS', GB:'GBR', CN:'CHN', DE:'DEU', BR:'BRA', IN:'IND', RU:'RUS', CA:'CAN', FR:'FRA', JP:'JPN', IT:'ITA', ES:'ESP', SE:'SWE', NO:'NOR', NL:'NLD', NZ:'NZL' };
+      if (TWO_TO_ISO3[two]) return TWO_TO_ISO3[two];
+    }
+    // Unknown -> no polygon
+    return null;
+  }
+
+  function parseCountryTokens(cell) {
+    // Split on common separators: comma, full‑width comma, semicolon, or pipe; trim whitespace; keep originals for display
+    const raw = canon(cell);
+    if (!raw) return { originalTokens: [], iso3s: []};
+    const originalTokens = raw.split(/[,，;|]/).map(s => s.trim()).filter(Boolean);
+    const iso3s = new Set();
+    for (const t of originalTokens) {
+      const iso = tokenToIso3(t);
+      if (iso) iso3s.add(iso);
+    }
+    return { originalTokens, iso3s: [...iso3s] };
+  }
+
+  function normalizeRow(rawRow) {
+    // Map arbitrary header variations to canonical keys.
+    const map = {};
+    for (const [k, v] of Object.entries(rawRow)) {
+      const keyCanon = canonHeader(k);
+      state.detectedHeaders.add(k);
+      // build a lookup between canonicalized header and our expected canonical header
+      for (const expected of CANONICAL_HEADERS) {
+        const expectedCanon = canonHeader(expected);
+        if (keyCanon === expectedCanon) { map[expected] = v; break; }
+      }
+    }
+    // Ensure all keys exist
+    for (const h of CANONICAL_HEADERS) if (!(h in map)) map[h] = '';
+
+    const country = parseCountryTokens(map['CountryCode']);
+    const modes = normalizeModeCell(map['Mode']);
+
+    return {
+      ...map,
+      __originalTokens: country.originalTokens,
+      __iso3s: country.iso3s,
+      __modes: modes
+    };
+  }
+
+  function groupByApproach(rows) {
+    const m = new Map();
+    for (const r of rows) {
+      const key = canon(r['ApproachName']) || '(Unnamed)';
+      if (!m.has(key)) m.set(key, new Set());
+      for (const tok of r.__originalTokens) m.get(key).add(tok);
+    }
+    // Return sorted array
+    return [...m.entries()].sort((a,b) => a[0].localeCompare(b[0], undefined, {sensitivity:'base'}))
+           .map(([name,set]) => ({ name, locations: [...set] }));
+  }
+
+  // =============================
+  // RENDER — Panel
+  // =============================
+  const cardsEl = document.getElementById('cards');
+  const panelTitleEl = document.getElementById('panelTitle');
+  const panelSubEl = document.getElementById('panelSub');
+  const panelModeLabelEl = document.getElementById('panelModeLabel');
+  const diagEl = document.getElementById('diag');
+  const lockedRowEl = document.getElementById('lockedRow');
+  const lockedTextEl = document.getElementById('lockedText');
+  const unlockBtnEl = document.getElementById('unlockBtn');
+
+  function el(tag, attrs={}, children=[]) {
+    const e = document.createElement(tag);
+    for (const [k,v] of Object.entries(attrs)) {
+      if (k === 'class') e.className = v;
+      else if (k === 'text') e.textContent = v;
+      else e.setAttribute(k, v);
+    }
+    for (const c of children) e.appendChild(c);
+    return e;
+  }
+
+  function pill(text) { return el('span', {class:'chip', text}); }
+
+  function renderDiagnostics() {
+    const n = state.rows.length;
+    const headers = [...state.detectedHeaders];
+    const shaded = state.shadedIso3ByMode[state.mode].size;
+    const worldCount = state.world?.features?.length || 0;
+    diagEl.textContent = `Loaded ${n} rows. Headers seen: ${headers.join(' | ')}. Countries loaded: ${worldCount}. Shaded in ${state.mode}: ${shaded}.`;
+  }
+
+  function renderGlobalSummary() {
+    panelTitleEl.textContent = 'Global summary';
+    panelModeLabelEl.textContent = state.mode;
+    panelSubEl.innerHTML = `Showing all approaches in <span id="panelModeLabel">${state.mode}</span> mode.`;
+    lockedRowEl.hidden = true;
+    unlockBtnEl.disabled = true;
+
+    const items = groupByApproach(state.rowsByMode[state.mode]);
+    cardsEl.innerHTML = '';
+    if (items.length === 0) {
+      cardsEl.appendChild(el('div', {class:'empty', text:'No data found for this mode.'}));
+    } else {
+      const wrap = el('div', {class:'summary-list'});
+      for (const it of items) {
+        const card = el('div', {class:'summary-item'});
+        card.appendChild(el('div', {class:'name', text: it.name}));
+        card.appendChild(el('div', {class:'locs', text: it.locations.join(', ')}));
+        wrap.appendChild(card);
+      }
+      cardsEl.appendChild(wrap);
+    }
+    renderDiagnostics();
+  }
+
+  function renderCountryDetail(iso3) {
+    const name = countryNameByIso3(iso3) || iso3 || 'Unknown';
+    panelTitleEl.textContent = name;
+    panelModeLabelEl.textContent = state.mode;
+    panelSubEl.textContent = `Approaches in ${state.mode} mode`;
+
+    if (state.lockedIso3) {
+      lockedTextEl.textContent = `Locked on ${name}`;
+      lockedRowEl.hidden = false;
+      unlockBtnEl.disabled = false;
+    } else {
+      lockedRowEl.hidden = true;
+      unlockBtnEl.disabled = true;
+    }
+
+    const rows = (state.rowsByModeIso3[state.mode].get(iso3) || []).slice();
+    cardsEl.innerHTML = '';
+
+    if (rows.length === 0) {
+      cardsEl.appendChild(el('div', {class:'empty', text:'No rows for this country in this mode.'}));
+      renderDiagnostics();
+      return;
+    }
+
+    // Sort by ApproachName, then by Level/Orientation
+    rows.sort((a,b) => (canon(a.ApproachName).localeCompare(canon(b.ApproachName), undefined, {sensitivity:'base'})) || (canon(a.Level).localeCompare(canon(b.Level))));
+
+    for (const r of rows) {
+      const card = el('div', {class:'card'});
+      const h3 = el('h3');
+      h3.appendChild(el('span', {text: r.ApproachName || '(Unnamed)'}));
+      const chips = el('span', {class:'chips'});
+      if (canon(r.Orientation)) chips.appendChild(pill(canon(r.Orientation)));
+      if (canon(r.Mode)) chips.appendChild(pill(canon(r.Mode)));
+      h3.appendChild(chips);
+      card.appendChild(h3);
+
+      const sections = [
+        ['Definition', 'Definition'],
+        ['Source / Context', 'SourceTypeContext'],
+        ['Author', 'Author'],
+        ['Theoretical stance', 'TheoreticalStance'],
+        ['Student‑friendly strategy', 'StudentFriendlyStrategy'],
+        ['Application to humanities', 'ApplicationToHumanities'],
+        ['Key quotes', 'KeyQuotes'],
+        ['Connections / critiques', 'ConnectionsCritiques'],
+        ['Government mandated', 'GovernmentMandated'],
+        ['Level', 'Level']
+      ];
+
+      for (const [label, key] of sections) {
+        const val = canon(r[key]);
+        if (!val) continue;
+        const sec = el('div', {class:'section'});
+        sec.appendChild(el('h4', {text: label}));
+        sec.appendChild(el('p', {text: val}));
+        card.appendChild(sec);
+      }
+      cardsEl.appendChild(card);
+    }
+    renderDiagnostics();
+  }
+
+  // =============================
+  // MAP — D3 setup
+  // =============================
+  const svg = d3.select('#map');
+  const g = svg.append('g');
+  const projection = d3.geoNaturalEarth1();
+  const path = d3.geoPath(projection);
+  const graticule = d3.geoGraticule10();
+
+  g.append('path').attr('class','graticule').attr('d', path(graticule));
+
+  const countriesG = g.append('g').attr('class','countries');
+
+  const zoom = d3.zoom().scaleExtent([1, 8]).on('zoom', (event) => {
+    g.attr('transform', event.transform);
+  });
+  svg.call(zoom);
+
+  document.getElementById('resetZoom').addEventListener('click', () => {
+    svg.transition().duration(400).call(zoom.transform, d3.zoomIdentity);
+  });
+
+  unlockBtnEl.addEventListener('click', () => {
+    state.lockedIso3 = null; updateLockStyles(); maybeRenderPanel();
+  });
+
+  function updateLockStyles() {
+    countriesG.selectAll('path.country').classed('locked', d => d.properties.iso3 === state.lockedIso3);
+  }
+
+  function countryNameByIso3(iso3) {
+    const f = state.world?.features?.find(f => f.properties.iso3 === iso3);
+    return f?.properties?.name || null;
+  }
+
+  function shadeByMode() {
+    const set = state.shadedIso3ByMode[state.mode];
+    countriesG.selectAll('path.country')
+      .classed('hasData', d => set.has(d.properties.iso3));
+  }
+
+  function maybeRenderPanel() {
+    if (state.lockedIso3) {
+      renderCountryDetail(state.lockedIso3);
+    } else if (state.hoveredIso3) {
+      renderCountryDetail(state.hoveredIso3);
+    } else {
+      renderGlobalSummary();
+    }
+  }
+
+  // =============================
+  // DATA — Load world map + CSV
+  // =============================
+  async function loadWorld() {
+    // Use world-atlas TopoJSON + country-names TSV to attach iso3 codes.
+    const topoUrl = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json';
+    const namesUrl = 'https://cdn.jsdelivr.net/npm/world-atlas@2/country-names.tsv';
+    const [topo, namesTsv] = await Promise.all([
+      fetch(topoUrl).then(r => r.json()),
+      fetch(namesUrl).then(r => r.text())
+    ]);
+    const names = d3.tsvParse(namesTsv).reduce((acc, d) => {
+      // d => { id, name, iso3 } where id is zero-padded like '004'
+      acc[String(d.id).padStart(3,'0')] = d; return acc;
+    }, {});
+    const countries = topojson.feature(topo, topo.objects.countries);
+    // Attach iso3/name onto properties — world-atlas feature ids can be numeric, so pad them to 3 chars
+    countries.features.forEach(f => {
+      const id3 = String(f.id).padStart(3,'0');
+      const meta = names[id3] || {};
+      f.properties.name = meta.name || f.properties.name || 'Unknown';
+      f.properties.iso3 = meta.iso3 || null; // some tiny territories may be null
+    });
+    state.world = countries;
+  }
+
+  async function loadPisaIfAny() {
+    if (!pisaCsvUrl) return null;
+    const rows = await d3.csv(pisaCsvUrl, d3.autoType);
+    const byIso = new Map();
+    for (const r of rows) if (r.iso3) byIso.set(r.iso3.toUpperCase(), r);
+    state.pisaByIso3 = byIso;
+  }
+
+  async function loadDataCsv() {
+    const raw = await d3.csv(dataCsvUrl);
+    const normalized = raw
+      .map(normalizeRow)
+      // Drop rows that are entirely empty / junk (no mode, no iso3s, no approach)
+      .filter(r => r && (r.__modes.length > 0 || r.__iso3s.length > 0 || canon(r.ApproachName) || canon(r.CountryCode)));
+    state.rows = normalized;
+
+    // Index rows by mode and iso3
+    for (const r of normalized) {
+      for (const m of r.__modes) {
+        state.rowsByMode[m].push(r);
+        for (const iso of r.__iso3s) {
+          if (!state.rowsByModeIso3[m].has(iso)) state.rowsByModeIso3[m].set(iso, []);
+          state.rowsByModeIso3[m].get(iso).push(r);
+          state.shadedIso3ByMode[m].add(iso);
+        }
+      }
+    }
+  }
+
+  function drawMap() {
+    countriesG.selectAll('path.country')
+      .data(state.world.features.filter(f => !!f.properties.iso3))
+      .join('path')
+      .attr('class', 'country')
+      .attr('d', path)
+      .on('mouseover', (event, d) => {
+        if (state.lockedIso3) return; // ignore while locked
+        state.hoveredIso3 = d.properties.iso3 || null;
+        maybeRenderPanel();
+      })
+      .on('mouseout', (event, d) => {
+        if (state.lockedIso3) return; // ignore while locked
+        state.hoveredIso3 = null;
+        maybeRenderPanel();
+      })
+      .on('click', (event, d) => {
+        const iso = d.properties.iso3 || null;
+        if (!iso) return;
+        state.lockedIso3 = (state.lockedIso3 === iso) ? null : iso;
+        updateLockStyles();
+        maybeRenderPanel();
+      });
+
+    shadeByMode();
+  }
+
+  // =============================
+  // BOOT
+  // =============================
+  async function boot() {
+    try {
+      await Promise.all([loadWorld(), loadPisaIfAny(), loadDataCsv()]);
+      drawMap();
+      renderGlobalSummary();
+    } catch (err) {
+      console.error(err);
+      cardsEl.innerHTML = '<div class="empty">Failed to load data. Check the CSV path (dataCsvUrl) and network permissions.</div>';
+    }
+  }
+
+  // =============================
+  // UI — Mode change
+  // =============================
+  document.getElementById('mode').addEventListener('change', (e) => {
+    state.mode = e.target.value;
+    document.getElementById('panelModeLabel').textContent = state.mode;
+    shadeByMode();
+    maybeRenderPanel();
+  });
+
+  // Kick off
+  boot();
+  </script>
+</body>
+</html>
