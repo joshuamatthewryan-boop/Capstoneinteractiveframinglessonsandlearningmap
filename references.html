@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>References — Framing Lessons</title>
+  <style>
+    /* Light, print-friendly APA-7 look */
+    html,body{height:100%} body{margin:0;background:#ffffff;color:#111;
+      font-family: ui-serif, Georgia, 'Times New Roman', Times, serif;}
+    header{display:flex;gap:.8rem;align-items:center;justify-content:space-between;
+      padding:1rem 1.25rem;border-bottom:1px solid #e6e6e6;background:#fafafa;position:sticky;top:0;z-index:10}
+    .title{font-weight:700}
+    .nav a{margin-left:.5rem;text-decoration:none;color:#0b57d0;background:#f2f6ff;border:1px solid #dae5ff;
+      padding:.45rem .65rem;border-radius:10px}
+    main{max-width:820px;margin:0 auto;padding:1.25rem}
+    .card{background:#fff;border:1px solid #e6e6e6;border-radius:12px;box-shadow:0 6px 24px rgba(0,0,0,.06);padding:1rem 1.25rem}
+    .note{color:#555;margin:0 0 .5rem 0;font-size:.95rem}
+
+    /* APA-7: double spacing, hanging indent, 1" feel via readable margins */
+    .refs{list-style:decimal;margin:0 0 0 1.5rem;padding:0;line-height:1.9;font-size:18px}
+    .refs li{margin:0 0 .9rem 0;padding-left:1.4rem;text-indent:-1.4rem}
+    .refs i{font-style:italic}
+    /* Nice print output */
+    @media print{
+      body{background:#fff}
+      header{position:static}
+      main{margin:0 auto}
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="title">References</div>
+    <nav class="nav">
+      <a href="index.html">Home</a>
+      <a href="video.html">Thesis video</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="card">
+      <p class="note">Paste each reference as a separate list item. Use <code>&lt;i&gt;</code> for titles that should be italicised (books, journal names, volume numbers per APA-7).</p>
+      <ol class="refs">
+        <!-- EXAMPLES — replace with your own -->
+        <li>Author, A. A., &amp; Author, B. B. (2021). <i>Book title: Subtitle</i>. Publisher. https://doi.org/xx.xxxx/xxxxx</li>
+        <li>Author, C. C. (2020). Article title. <i>Journal Name</i>, <i>22</i>(4), 123–145. https://doi.org/xx.xxxx/xxxxx</li>
+        <li>Organisation Name. (2022). <i>Report title</i> (No. 123). Publisher. URL</li>
+        <!-- Add more <li>…</li> entries -->
+      </ol>
+    </div>
+  </main>
+</body>
+</html>
