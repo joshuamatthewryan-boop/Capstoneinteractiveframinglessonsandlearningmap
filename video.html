@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Thesis Presentation — Framing Lessons</title>
+  <style>
+    :root{--panel:#0f1115;--ink:#e6e7eb;--muted:#9aa3b2;--chip:rgba(255,255,255,.08);--chipbr:rgba(255,255,255,.12);}
+    html,body{height:100%}body{margin:0;background:radial-gradient(1200px 800px at 20% -10%,#162033 0%,#0b0c10 60%);color:var(--ink);
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,'Noto Sans','Arial Unicode MS',Arial,sans-serif}
+    header{display:flex;gap:.6rem;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border-bottom:1px solid rgba(255,255,255,.08);
+      background:linear-gradient(180deg,rgba(15,17,21,.85),rgba(15,17,21,.65));position:sticky;top:0;z-index:10}
+    .title{font-weight:700}
+    .nav a{margin-left:.5rem;text-decoration:none;color:var(--ink);background:var(--chip);border:1px solid var(--chipbr);
+      padding:.45rem .65rem;border-radius:10px}
+    .wrap{max-width:980px;margin:0 auto;padding:1.25rem}
+    .card{background:var(--panel);border:1px solid rgba(255,255,255,.07);border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.35);padding:1rem}
+    .muted{color:var(--muted)}
+    .frame{width:100%;aspect-ratio:16/9;border:0;border-radius:12px;background:#000}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="title">Thesis Presentation</div>
+    <nav class="nav">
+      <a href="index.html">Home</a>
+      <a href="references.html">References</a>
+    </nav>
+  </header>
+
+  <main class="wrap">
+    <div class="card">
+      <p class="muted">This page embeds your YouTube video. Replace <code>https://youtu.be/ZRIV3vAwb3s?si=ltZIviQ78kIu4vkr</code> in the line below.</p>
+
+    
+      <iframe
+        class="frame"
+        src="https://www.youtube.com/embed/VIDEO_ID_HERE"
+        title="Thesis presentation video"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        allowfullscreen></iframe>
+    </div>
+  </main>
+</body>
+</html>
