@@ -2,28 +2,45 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>References — Framing Lessons</title>
   <style>
-    /* Light, print-friendly APA-7 look */
-    html,body{height:100%} body{margin:0;background:#ffffff;color:#111;
-      font-family: ui-serif, Georgia, 'Times New Roman', Times, serif;}
-    header{display:flex;gap:.8rem;align-items:center;justify-content:space-between;
-      padding:1rem 1.25rem;border-bottom:1px solid #e6e6e6;background:#fafafa;position:sticky;top:0;z-index:10}
+    /* White, print-friendly page */
+    html,body{height:100%}
+    body{
+      margin:0;
+      background:#fff;
+      color:#111;
+      font-family:ui-serif, Georgia, "Times New Roman", Times, serif;
+    }
+    /* Simple sticky header + nav */
+    header{
+      display:flex;align-items:center;justify-content:space-between;
+      gap:.8rem;padding:1rem 1.25rem;border-bottom:1px solid #e6e6e6;background:#fafafa;
+      position:sticky;top:0;z-index:10
+    }
     .title{font-weight:700}
-    .nav a{margin-left:.5rem;text-decoration:none;color:#0b57d0;background:#f2f6ff;border:1px solid #dae5ff;
-      padding:.45rem .65rem;border-radius:10px}
+    .nav a{
+      margin-left:.5rem;text-decoration:none;color:#0b57d0;background:#f2f6ff;border:1px solid #dae5ff;
+      padding:.45rem .65rem;border-radius:10px
+    }
+
+    /* Content card */
     main{max-width:820px;margin:0 auto;padding:1.25rem}
     .card{background:#fff;border:1px solid #e6e6e6;border-radius:12px;box-shadow:0 6px 24px rgba(0,0,0,.06);padding:1rem 1.25rem}
-    .note{color:#555;margin:0 0 .5rem 0;font-size:.95rem}
+    .note{color:#555;margin:0 0 .75rem 0;font-size:.95rem}
 
-    /* APA-7: double spacing, hanging indent, 1" feel via readable margins */
-    .refs{list-style:decimal;margin:0 0 0 1.5rem;padding:0;line-height:1.9;font-size:18px}
-    .refs li{margin:0 0 .9rem 0;padding-left:1.4rem;text-indent:-1.4rem}
-    .refs i{font-style:italic}
-    /* Nice print output */
+    /* Your APA list (unordered, hanging indent). APA-7 is double-spaced. */
+    ul.apa{list-style:none;padding-left:0;margin-left:0}
+    ul.apa li{
+      margin:0 0 .9rem 2rem;    /* spacing between items */
+      text-indent:-2rem;        /* hanging indent */
+      line-height:1.9;          /* ~double spaced */
+      font-size:18px;
+    }
+    ul.apa i{font-style:italic}
+
     @media print{
-      body{background:#fff}
       header{position:static}
       main{margin:0 auto}
     }
@@ -40,14 +57,59 @@
 
   <main>
     <div class="card">
-      <p class="note">Paste each reference as a separate list item. Use <code>&lt;i&gt;</code> for titles that should be italicised (books, journal names, volume numbers per APA-7).</p>
-      <ol class="refs">
-        <!-- EXAMPLES — replace with your own -->
-        <li>Author, A. A., &amp; Author, B. B. (2021). <i>Book title: Subtitle</i>. Publisher. https://doi.org/xx.xxxx/xxxxx</li>
-        <li>Author, C. C. (2020). Article title. <i>Journal Name</i>, <i>22</i>(4), 123–145. https://doi.org/xx.xxxx/xxxxx</li>
-        <li>Organisation Name. (2022). <i>Report title</i> (No. 123). Publisher. URL</li>
-        <!-- Add more <li>…</li> entries -->
-      </ol>
+      <p class="note">Paste each citation as a list item below. Use <code>&lt;i&gt;</code> for titles that should be italicised (books, journal names, volume numbers per APA&nbsp;7).</p>
+      <ul class="apa">
+      <li>Academic Assessment Services. (2023). <i>Allwell testing &amp; online reporting</i> [Website]. https://www.academicassessment.com.au/</li>
+<li>Altbach, P. G., &amp; Kelly, G. P. (Eds.). (1984). <i>Education and colonialism</i>. Longman.</li>
+<li>Black, P., &amp; Wiliam, D. (1998). Inside the black box: Raising standards through classroom assessment. <i>Phi Delta Kappan</i>, <i>80</i>(2), 139–144, 146–148.</li>
+<li>Bloom, B. S., Engelhart, M. D., Furst, E. J., Hill, W. H., &amp; Krathwohl, D. R. (1956). <i>Taxonomy of educational objectives: The classification of educational goals. Handbook I: Cognitive domain</i>. Longmans, Green.</li>
+<li>Bobbitt, J. F. (1918). <i>The curriculum</i>. Houghton Mifflin.</li>
+<li>CAST. (2024). <i>UDL Guidelines (Version 3.0)</i>. https://udlguidelines.cast.org/</li>
+<li>Clarke, S. (1998). <i>Targeting assessment in the primary classroom</i>. Hodder &amp; Stoughton.</li>
+<li>Clarke, S. (2021). <i>Formative assessment in action</i> (2nd ed.). Hodder Education.</li>
+<li>Devy, G. N. (2021, December 18). <i>Day 1 – Inaugural address and Session 1: Language ideologies and the “vernacular” in South Asia</i> [Video]. SPARC. https://youtu.be/g878hMeFfBw</li>
+<li>Department of Education (Victoria). (2024). <i>Victorian Teaching and Learning Model 2.0</i>. Policy and Advisory Library. https://www2.education.vic.gov.au/pal/victorian-teaching-learning-model/policy</li>
+<li>Dewey, J. (1938). <i>Experience and education</i>. Kappa Delta Pi.</li>
+<li>Dowley, M., &amp; Lovell, O. (2024). <i>The classroom management handbook</i>. John Catt.</li>
+<li>Etymonline. (n.d.). <i>Objective (adj.) / objectum (n.)</i>. https://www.etymonline.com/</li>
+<li>Etymonline. (n.d.). <i>Intention (n.) / intent</i>. https://www.etymonline.com/</li>
+<li>Gay, G. (2018). <i>Culturally responsive teaching: Theory, research, and practice</i> (3rd ed.). Teachers College Press.</li>
+<li>Gess-Newsome, J. (2015). A model of teacher professional knowledge and skill: PCK revisited. In A. Berry, P. Friedrichsen, &amp; J. Loughran (Eds.), <i>Re-examining pedagogical content knowledge in science education</i> (pp. 28–42). Routledge.</li>
+<li>Goffman, E. (1974). <i>Frame analysis: An essay on the organization of experience</i>. Harper &amp; Row.</li>
+<li>Hattie, J. (2009). <i>Visible learning: A synthesis of over 800 meta-analyses relating to achievement</i>. Routledge.</li>
+<li>Hattie, J. (2012). <i>Visible learning for teachers: Maximizing impact on learning</i>. Routledge.</li>
+<li>Hattie, J., &amp; Clarke, S. (2019). <i>Visible learning: Feedback</i>. Routledge.</li>
+<li>Heidegger, M. (1927). <i>Sein und Zeit</i> [<i>Being and time</i>]. Niemeyer.</li>
+<li>Husserl, E. (1913). <i>Ideen zu einer reinen Phänomenologie und phänomenologischen Philosophie. Erstes Buch</i> [<i>Ideas I</i>]. Niemeyer.</li>
+<li>Kirschner, P. A., &amp; Hendrick, C. (2024). <i>How learning happens: Seminal works in educational psychology and what they mean in practice</i> (2nd ed.). Routledge.</li>
+<li>Mager, R. F. (1962). <i>Preparing instructional objectives</i>. Fearon.</li>
+<li>Mager, R. F. (1997). <i>Preparing instructional objectives</i> (3rd ed.). CEP Press.</li>
+<li>Marzano, R. J. (2001). <i>Designing a new taxonomy of educational objectives</i>. Corwin.</li>
+<li>Maté, G. (2022). <i>The myth of normal: Trauma, illness, and healing in a toxic culture</i>. Avery.</li>
+<li>Microsoft Corporation. (2024). <i>Microsoft Excel</i> (Version 16.x) [Computer software]. https://www.microsoft.com/microsoft-365/excel</li>
+<li>Morrison, C. M. (2013). Teacher identity in the early career phase: Trajectories that explain and influence development. <i>Australian Journal of Teacher Education, 38</i>(4), 91–107.</li>
+<li>OECD. (2019). <i>PISA 2018 results (Volume III): What school life means for students’ lives</i>. OECD Publishing. https://www.oecd.org/en/publications/pisa-2018-results-volume-iii_acd78851-en.html</li>
+<li>Parliament of Victoria, Legislative Council Legal and Social Issues Committee. (2024). <i>Inquiry into the state education system in Victoria</i> [Report]. Parliament of Victoria. https://www.parliament.vic.gov.au/stateeducationinquiry</li>
+<li>Piaget, J. (1968). <i>Structuralism</i> (C. Maschler, Trans.). Basic Books.</li>
+<li>Pivot Professional Learning. (n.d.). <i>Student perception surveys on teaching</i> [Website]. https://www.pivotpl.com/</li>
+<li>Reynolds, D. (1995). <i>School effectiveness: The debate and the practice</i>. Cassell.</li>
+<li>Rosenshine, B. (2012). Principles of instruction: Research-based strategies that all teachers should know. <i>American Educator, 36</i>(1), 12–19, 39. https://www.aft.org/ae/spring2012/rosenshine</li>
+<li>Samaras, A. P. (2011). <i>Self-study teacher research: Improving your practice through collaborative inquiry</i>. SAGE.</li>
+<li>Samaras, A. P. (2012). <i>Self-study teacher research: Improving your practice through collaborative inquiry</i> (Paperback ed.). SAGE.</li>
+<li>School Curriculum and Assessment Authority (SCAA). (1997). <i>Teacher assessment in Key Stage 2</i>. SCAA.</li>
+<li>Shulman, L. S. (1986). Those who understand: Knowledge growth in teaching. <i>Educational Researcher, 15</i>(2), 4–14. https://doi.org/10.3102/0013189X015002004</li>
+<li>State of Victoria, Victorian Curriculum and Assessment Authority (VCAA). (n.d.). <i>Victorian Curriculum F–10</i> [Website]. https://victoriancurriculum.vcaa.vic.edu.au/</li>
+<li>State of Victoria, Victorian Curriculum and Assessment Authority (VCAA). (n.d.). <i>Previous curricula (F–10)</i> [Web page]. https://www.vcaa.vic.edu.au/curriculum/foundation-10/previous-curricula</li>
+<li>State of Victoria, Victorian Curriculum and Assessment Authority (VCAA). (n.d.). <i>Civics and Citizenship curriculum (F–10)</i> [Web page]. https://f10.vcaa.vic.edu.au/learning-areas/humanities/civics-and-citizenship/curriculum</li>
+<li>State of Victoria, Victorian Curriculum and Assessment Authority (VCAA). (n.d.). <i>History curriculum (F–10)</i> [Web page]. https://f10.vcaa.vic.edu.au/learning-areas/humanities/history/curriculum</li>
+<li>Steplab. (n.d.). <i>Steplab: Professional development that really works</i> [Website]. https://steplab.co/</li>
+<li>Sweller, J. (1988). Cognitive load during problem solving: Effects on learning. <i>Cognitive Science, 12</i>(2), 257–285. https://doi.org/10.1207/s15516709cog1202_4</li>
+<li>Tyler, R. W. (1949). <i>Basic principles of curriculum and instruction</i>. University of Chicago Press.</li>
+<li>Wiliam, D. (1992). <i>Some technical issues in assessment</i>. Institute of Education.</li>
+<li>Wiliam, D. (2018). <i>Creating the schools our children need: Why what we’re doing now won’t help much (and what we can do instead)</i>. Learning Sciences International.</li>
+<li>Ryan, J. (2025). <i>Class Task Tracker</i> [Computer software]. Unpublished.</li>
+      </ul>  
+      
     </div>
   </main>
 </body>
